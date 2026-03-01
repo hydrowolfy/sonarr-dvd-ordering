@@ -44,6 +44,7 @@ namespace NzbDrone.Core.Tv
         public SeriesTypes SeriesType { get; set; }
         public string Network { get; set; }
         public bool UseSceneNumbering { get; set; }
+        public EpisodeOrderingType EpisodeOrdering { get; set; }
         public string TitleSlug { get; set; }
         public string Path { get; set; }
         public int Year { get; set; }
@@ -80,6 +81,7 @@ namespace NzbDrone.Core.Tv
             MonitorNewItems = otherSeries.MonitorNewItems;
 
             SeriesType = otherSeries.SeriesType;
+            EpisodeOrdering = otherSeries.EpisodeOrdering;
             RootFolderPath = otherSeries.RootFolderPath;
             Tags = otherSeries.Tags;
             AddOptions = otherSeries.AddOptions;

@@ -5,6 +5,7 @@ import FormGroup from 'Components/Form/FormGroup';
 import FormInputButton from 'Components/Form/FormInputButton';
 import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
+import { EnhancedSelectInputValue } from 'Components/Form/Select/EnhancedSelectInput';
 import Icon from 'Components/Icon';
 import Button from 'Components/Link/Button';
 import SpinnerErrorButton from 'Components/Link/SpinnerErrorButton';
@@ -32,6 +33,14 @@ import RootFolderModal from './RootFolder/RootFolderModal';
 import { RootFolderUpdated } from './RootFolder/RootFolderModalContent';
 import styles from './EditSeriesModalContent.css';
 
+
+const episodeOrderingOptions: EnhancedSelectInputValue<string>[] = [
+  { key: 'aired', get value() { return translate('EpisodeOrderingAired'); } },
+  { key: 'absolute', get value() { return translate('EpisodeOrderingAbsolute'); } },
+  { key: 'dvd', get value() { return translate('EpisodeOrderingDvd'); } },
+  { key: 'alternate', get value() { return translate('EpisodeOrderingAlternate'); } },
+];
+
 export interface EditSeriesModalContentProps {
   seriesId: number;
   onModalClose: () => void;
@@ -51,6 +60,7 @@ function EditSeriesModalContent({
     seasonFolder,
     qualityProfileId,
     seriesType,
+    episodeOrdering,
     path,
     tags,
     rootFolderPath: initialRootFolderPath,
@@ -78,6 +88,7 @@ function EditSeriesModalContent({
         seasonFolder,
         qualityProfileId,
         seriesType,
+        episodeOrdering,
         path,
         tags,
       },
@@ -90,6 +101,7 @@ function EditSeriesModalContent({
     seasonFolder,
     qualityProfileId,
     seriesType,
+    episodeOrdering,
     path,
     tags,
     pendingChanges,
@@ -231,6 +243,18 @@ function EditSeriesModalContent({
               name="seriesType"
               {...settings.seriesType}
               helpText={translate('SeriesTypesHelpText')}
+              onChange={handleInputChange}
+            />
+          </FormGroup>
+
+          <FormGroup size={sizes.MEDIUM}>
+            <FormLabel>{translate('EpisodeOrdering')}</FormLabel>
+
+            <FormInputGroup
+              type={inputTypes.SELECT}
+              name="episodeOrdering"
+              values={episodeOrderingOptions}
+              {...settings.episodeOrdering}
               onChange={handleInputChange}
             />
           </FormGroup>

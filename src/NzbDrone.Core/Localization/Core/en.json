@@ -2246,5 +2246,10 @@
   "Yes": "Yes",
   "YesCancel": "Yes, Cancel",
   "Yesterday": "Yesterday",
-  "YesterdayAt": "Yesterday at {time}"
+  "YesterdayAt": "Yesterday at {time}",
+  "EpisodeOrdering": "Episode Ordering",
+  "EpisodeOrderingAired": "Aired (Default)",
+  "EpisodeOrderingAbsolute": "Absolute",
+  "EpisodeOrderingDvd": "DVD",
+  "EpisodeOrderingAlternate": "Production / Alternate"
 }

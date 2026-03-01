@@ -18,6 +18,7 @@ export type SeriesMonitor =
 export type SeriesStatus = 'continuing' | 'ended' | 'upcoming' | 'deleted';
 
 export type MonitorNewItems = 'all' | 'none';
+export type EpisodeOrdering = 'aired' | 'absolute' | 'dvd' | 'alternate';
 
 export type CoverType = 'poster' | 'banner' | 'fanart' | 'season';
 
@@ -102,6 +103,7 @@ interface Series extends ModelBase {
   tvRageId: number;
   tmdbId: number;
   useSceneNumbering: boolean;
+  episodeOrdering: EpisodeOrdering;
   year: number;
   addOptions: SeriesAddOptions;
 }
