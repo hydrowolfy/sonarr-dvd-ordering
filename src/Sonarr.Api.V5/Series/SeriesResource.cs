@@ -32,6 +32,7 @@ public class SeriesResource : RestResource
     public bool Monitored { get; set; }
     public NewItemMonitorTypes MonitorNewItems { get; set; }
     public bool UseSceneNumbering { get; set; }
+    public EpisodeOrderingType EpisodeOrdering { get; set; }
     public int Runtime { get; set; }
     public int TvdbId { get; set; }
     public int TvRageId { get; set; }
@@ -85,6 +86,7 @@ public static class SeriesResourceMapper
             Monitored = model.Monitored,
             MonitorNewItems = model.MonitorNewItems,
             UseSceneNumbering = model.UseSceneNumbering,
+            EpisodeOrdering = model.EpisodeOrdering,
             Runtime = model.Runtime,
             TvdbId = model.TvdbId,
             TvRageId = model.TvRageId,
@@ -128,6 +130,7 @@ public static class SeriesResourceMapper
             Monitored = resource.Monitored,
             MonitorNewItems = resource.MonitorNewItems,
             UseSceneNumbering = resource.UseSceneNumbering,
+            EpisodeOrdering = resource.EpisodeOrdering,
             Runtime = resource.Runtime,
             TvdbId = resource.TvdbId,
             TvRageId = resource.TvRageId,

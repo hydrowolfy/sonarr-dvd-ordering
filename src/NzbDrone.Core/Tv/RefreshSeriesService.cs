@@ -22,6 +22,7 @@ namespace NzbDrone.Core.Tv
         private readonly IProvideSeriesInfo _seriesInfo;
         private readonly ISeriesService _seriesService;
         private readonly IRefreshEpisodeService _refreshEpisodeService;
+        private readonly IEpisodeOrderingService _episodeOrderingService;
         private readonly IEventAggregator _eventAggregator;
         private readonly IDiskScanService _diskScanService;
         private readonly ICheckIfSeriesShouldBeRefreshed _checkIfSeriesShouldBeRefreshed;
@@ -32,6 +33,7 @@ namespace NzbDrone.Core.Tv
         public RefreshSeriesService(IProvideSeriesInfo seriesInfo,
                                     ISeriesService seriesService,
                                     IRefreshEpisodeService refreshEpisodeService,
+                                    IEpisodeOrderingService episodeOrderingService,
                                     IEventAggregator eventAggregator,
                                     IDiskScanService diskScanService,
                                     ICheckIfSeriesShouldBeRefreshed checkIfSeriesShouldBeRefreshed,
@@ -42,6 +44,7 @@ namespace NzbDrone.Core.Tv
             _seriesInfo = seriesInfo;
             _seriesService = seriesService;
             _refreshEpisodeService = refreshEpisodeService;
+            _episodeOrderingService = episodeOrderingService;
             _eventAggregator = eventAggregator;
             _diskScanService = diskScanService;
             _checkIfSeriesShouldBeRefreshed = checkIfSeriesShouldBeRefreshed;
@@ -124,6 +127,8 @@ namespace NzbDrone.Core.Tv
             }
 
             series.Seasons = UpdateSeasons(series, seriesInfo);
+
+            episodes = _episodeOrderingService.ApplyEpisodeOrdering(series, episodes);
 
             _seriesService.UpdateSeries(series, publishUpdatedEvent: false);
             _refreshEpisodeService.RefreshEpisodeInfo(series, episodes);

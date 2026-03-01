@@ -55,6 +55,11 @@ public class SeriesEditorController : Controller
                 series.SeasonFolder = resource.SeasonFolder.Value;
             }
 
+            if (resource.EpisodeOrdering.HasValue)
+            {
+                series.EpisodeOrdering = resource.EpisodeOrdering.Value;
+            }
+
             if (resource.RootFolderPath.IsNotNullOrWhiteSpace())
             {
                 series.RootFolderPath = resource.RootFolderPath;

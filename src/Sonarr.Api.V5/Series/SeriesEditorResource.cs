@@ -10,6 +10,7 @@ public class SeriesEditorResource
     public int? QualityProfileId { get; set; }
     public SeriesTypes? SeriesType { get; set; }
     public bool? SeasonFolder { get; set; }
+    public EpisodeOrderingType? EpisodeOrdering { get; set; }
     public string? RootFolderPath { get; set; }
     public List<int> Tags { get; set; } = [];
     public ApplyTags ApplyTags { get; set; }
