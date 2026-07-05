@@ -278,7 +278,7 @@ namespace NzbDrone.Core.DataAugmentation.Xem
 
             if (message.Series.EpisodeOrdering != EpisodeOrderingType.Aired)
             {
-                RemoveSceneNumbering(message.Series);
+                PerformUpdate(message.Series);
                 return;
             }
 
