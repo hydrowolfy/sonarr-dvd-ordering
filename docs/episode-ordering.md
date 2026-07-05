@@ -28,7 +28,7 @@
 ## TVDB fetch + cache
 
 - Added `TvdbEpisodeOrderProxy` to request TVDB order endpoints for DVD / Alternate ordering.
-- Added in-memory cache per series + ordering with a 6 hour TTL to avoid excess TVDB calls.
+- Added in-memory cache per series + ordering with a 6-hour TTL to avoid excess TVDB calls.
 
 ## Fallback behavior
 

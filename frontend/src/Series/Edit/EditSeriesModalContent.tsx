@@ -274,6 +274,7 @@ function EditSeriesModalContent({
               name="episodeOrdering"
               values={episodeOrderingOptions}
               {...settings.episodeOrdering}
+              helpText={translate('EpisodeOrderingHelpText')}
               onChange={handleInputChange}
             />
           </FormGroup>

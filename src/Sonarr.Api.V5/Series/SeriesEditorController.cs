@@ -27,6 +27,7 @@ public class SeriesEditorController : Controller
     {
         var seriesToUpdate = _seriesService.GetSeries(resource.SeriesIds);
         var seriesToMove = new List<BulkMoveSeries>();
+        var seriesIdsToRefresh = new List<int>();
 
         foreach (var series in seriesToUpdate)
         {
@@ -55,9 +56,10 @@ public class SeriesEditorController : Controller
                 series.SeasonFolder = resource.SeasonFolder.Value;
             }
 
-            if (resource.EpisodeOrdering.HasValue)
+            if (resource.EpisodeOrdering.HasValue && series.EpisodeOrdering != resource.EpisodeOrdering.Value)
             {
                 series.EpisodeOrdering = resource.EpisodeOrdering.Value;
+                seriesIdsToRefresh.Add(series.Id);
             }
 
             if (resource.RootFolderPath.IsNotNullOrWhiteSpace())
@@ -106,7 +108,14 @@ public class SeriesEditorController : Controller
             });
         }
 
-        return Accepted(_seriesService.UpdateSeries(seriesToUpdate, !resource.MoveFiles).ToResource());
+        var updatedSeries = _seriesService.UpdateSeries(seriesToUpdate, !resource.MoveFiles);
+
+        if (seriesIdsToRefresh.Any())
+        {
+            _commandQueueManager.Push(new RefreshSeriesCommand(seriesIdsToRefresh), trigger: CommandTrigger.Manual);
+        }
+
+        return Accepted(updatedSeries.ToResource());
     }
 
     [HttpDelete]
