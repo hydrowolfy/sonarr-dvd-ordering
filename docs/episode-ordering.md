@@ -37,3 +37,34 @@
 - If TVDB order lookup fails, returns empty, or has no usable mappings:
   - Sonarr falls back to aired numbering,
   - warning is logged with series + ordering context.
+
+## Authentication (required for DVD / Alternate)
+
+TheTVDB v4 API requires a bearer token; unauthenticated calls fail. The proxy now logs in via
+`/v4/login` using values from `config.xml`:
+
+```xml
+<TvdbApiKey>your-tvdb-v4-api-key</TvdbApiKey>
+<TvdbSubscriberPin>your-subscriber-pin</TvdbSubscriberPin> <!-- only if your key requires a pin -->
+```
+
+Tokens are cached for 7 days. Without a key, DVD/Alternate ordering logs a warning and falls
+back to aired numbering.
+
+## Scene numbering interplay (the American Dad fix)
+
+When a series' ordering is pinned to anything other than `Aired`, XEM/scene numbering is disabled
+for that series so the user-selected numbering is authoritative end to end (Sonarr/Sonarr#2086):
+
+- `XemService` clears stored scene numbers on refresh and when the ordering changes, and stops
+  applying XEM mappings while pinned; switching back to `Aired` reapplies them.
+- `ParsingService` maps releases with their literal numbering (no scene-to-TVDB season shifts).
+- `ReleaseSearchService` searches using the series' own season/episode numbers; scene mappings
+  are still used as alternative title sources.
+
+## Refresh trigger and episode identity
+
+- Changing `episodeOrdering` via the API/UI now queues a `RefreshSeriesCommand` automatically so
+  the renumbering applies immediately.
+- `RefreshEpisodeService` matches existing episodes by TVDB episode ID first (falling back to
+  season/episode) so renumbering does not orphan episode files, history, or monitoring state.

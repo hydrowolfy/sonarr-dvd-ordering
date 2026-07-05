@@ -266,6 +266,73 @@ namespace NzbDrone.Core.Test.IndexerSearchTests
         }
 
         [Test]
+        public async Task episode_search_should_use_series_numbering_when_ordering_is_pinned()
+        {
+            _xemSeries.EpisodeOrdering = EpisodeOrderingType.Dvd;
+
+            WithEpisodes();
+
+            var allCriteria = WatchForSearchCriteria();
+
+            await Subject.EpisodeSearch(_xemEpisodes.First(), true, false);
+
+            var criteria = allCriteria.OfType<SingleEpisodeSearchCriteria>().ToList();
+
+            criteria.Count.Should().Be(1);
+            criteria[0].SeasonNumber.Should().Be(1);
+            criteria[0].EpisodeNumber.Should().Be(12);
+        }
+
+        [Test]
+        public async Task season_search_should_use_series_numbering_when_ordering_is_pinned()
+        {
+            _xemSeries.EpisodeOrdering = EpisodeOrderingType.Dvd;
+
+            WithEpisodes();
+
+            var allCriteria = WatchForSearchCriteria();
+
+            await Subject.SeasonSearch(_xemSeries.Id, 2, false, false, true, false);
+
+            var criteria = allCriteria.OfType<SeasonSearchCriteria>().ToList();
+
+            criteria.Count.Should().Be(1);
+            criteria[0].SeasonNumber.Should().Be(2);
+        }
+
+        [Test]
+        public async Task episode_search_should_use_series_numbering_for_scene_mapped_title_when_ordering_is_pinned()
+        {
+            _xemSeries.EpisodeOrdering = EpisodeOrderingType.Dvd;
+
+            WithEpisodes();
+
+            Mocker.GetMock<ISceneMappingService>()
+                  .Setup(s => s.FindByTvdbId(It.IsAny<int>()))
+                  .Returns(new List<SceneMapping>
+                  {
+                      new SceneMapping
+                      {
+                          SearchTerm = "Amerikan Dady",
+                          ParseTerm = "amerikandady",
+                          SeasonNumber = 1,
+                          SceneSeasonNumber = 2,
+                          Type = "XemService"
+                      }
+                  });
+
+            var allCriteria = WatchForSearchCriteria();
+
+            await Subject.EpisodeSearch(_xemEpisodes.First(), true, false);
+
+            var criteria = allCriteria.OfType<SingleEpisodeSearchCriteria>().ToList();
+
+            criteria.Count.Should().Be(2);
+            criteria.Should().OnlyContain(c => c.SeasonNumber == 1 && c.EpisodeNumber == 12);
+            criteria.SelectMany(c => c.SceneTitles).Should().Contain("Amerikan Dady");
+        }
+
+        [Test]
         public async Task scene_seasonsearch()
         {
             WithEpisodes();
