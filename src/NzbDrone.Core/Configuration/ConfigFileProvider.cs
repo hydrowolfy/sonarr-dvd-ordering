@@ -71,6 +71,8 @@ namespace NzbDrone.Core.Configuration
         bool TrustCgnatIpAddresses { get; }
         bool ProfilerEnabled { get; }
         string ProfilerPosition { get; }
+        string TvdbApiKey { get; }
+        string TvdbSubscriberPin { get; }
     }
 
     public class ConfigFileProvider : IConfigFileProvider
@@ -256,6 +258,10 @@ namespace NzbDrone.Core.Configuration
                 : GetValueEnum("ConsoleLogFormat", ConsoleLogFormat.Standard, false);
 
         public string Theme => _appOptions.Theme ?? GetValue("Theme", "auto", persist: false);
+
+        public string TvdbApiKey => GetValue("TvdbApiKey", string.Empty, persist: false);
+
+        public string TvdbSubscriberPin => GetValue("TvdbSubscriberPin", string.Empty, persist: false);
 
         public string PostgresHost => _postgresOptions?.Host ?? GetValue("PostgresHost", string.Empty, persist: false);
         public string PostgresUser => _postgresOptions?.User ?? GetValue("PostgresUser", string.Empty, persist: false);
