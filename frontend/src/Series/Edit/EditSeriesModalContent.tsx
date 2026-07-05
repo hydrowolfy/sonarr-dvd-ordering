@@ -33,12 +33,31 @@ import RootFolderModal from './RootFolder/RootFolderModal';
 import { RootFolderUpdated } from './RootFolder/RootFolderModalContent';
 import styles from './EditSeriesModalContent.css';
 
-
 const episodeOrderingOptions: EnhancedSelectInputValue<string>[] = [
-  { key: 'aired', get value() { return translate('EpisodeOrderingAired'); } },
-  { key: 'absolute', get value() { return translate('EpisodeOrderingAbsolute'); } },
-  { key: 'dvd', get value() { return translate('EpisodeOrderingDvd'); } },
-  { key: 'alternate', get value() { return translate('EpisodeOrderingAlternate'); } },
+  {
+    key: 'aired',
+    get value() {
+      return translate('EpisodeOrderingAired');
+    },
+  },
+  {
+    key: 'absolute',
+    get value() {
+      return translate('EpisodeOrderingAbsolute');
+    },
+  },
+  {
+    key: 'dvd',
+    get value() {
+      return translate('EpisodeOrderingDvd');
+    },
+  },
+  {
+    key: 'alternate',
+    get value() {
+      return translate('EpisodeOrderingAlternate');
+    },
+  },
 ];
 
 export interface EditSeriesModalContentProps {

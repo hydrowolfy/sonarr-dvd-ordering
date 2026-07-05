@@ -77,7 +77,6 @@ const seasonFolderOptions: EnhancedSelectInputValue<string>[] = [
   },
 ];
 
-
 const episodeOrderingOptions: EnhancedSelectInputValue<string>[] = [
   {
     key: NO_CHANGE,
@@ -86,10 +85,30 @@ const episodeOrderingOptions: EnhancedSelectInputValue<string>[] = [
     },
     isDisabled: true,
   },
-  { key: 'aired', get value() { return translate('EpisodeOrderingAired'); } },
-  { key: 'absolute', get value() { return translate('EpisodeOrderingAbsolute'); } },
-  { key: 'dvd', get value() { return translate('EpisodeOrderingDvd'); } },
-  { key: 'alternate', get value() { return translate('EpisodeOrderingAlternate'); } },
+  {
+    key: 'aired',
+    get value() {
+      return translate('EpisodeOrderingAired');
+    },
+  },
+  {
+    key: 'absolute',
+    get value() {
+      return translate('EpisodeOrderingAbsolute');
+    },
+  },
+  {
+    key: 'dvd',
+    get value() {
+      return translate('EpisodeOrderingDvd');
+    },
+  },
+  {
+    key: 'alternate',
+    get value() {
+      return translate('EpisodeOrderingAlternate');
+    },
+  },
 ];
 
 function EditSeriesModalContent(props: EditSeriesModalContentProps) {
@@ -288,7 +307,6 @@ function EditSeriesModalContent(props: EditSeriesModalContentProps) {
             onChange={onInputChange}
           />
         </FormGroup>
-
 
         <FormGroup>
           <FormLabel>{translate('EpisodeOrdering')}</FormLabel>
