@@ -35,8 +35,22 @@ namespace NzbDrone.Core.MetadataSource.Tvdb
         public List<TvdbEpisodeOrderMapping> GetEpisodeOrderMappings(int tvdbSeriesId, EpisodeOrderingType orderingType)
         {
             var cacheKey = $"{tvdbSeriesId}:{orderingType}";
+            var cached = _cache.Find(cacheKey);
 
-            return _cache.Get(cacheKey, () => FetchEpisodeMappings(tvdbSeriesId, orderingType), CacheTtl);
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            var mappings = FetchEpisodeMappings(tvdbSeriesId, orderingType);
+
+            // Only cache successful, non-empty results so transient failures self-heal on the next refresh.
+            if (mappings.Count > 0)
+            {
+                _cache.Set(cacheKey, mappings, CacheTtl);
+            }
+
+            return mappings;
         }
 
         private string GetAuthToken()
@@ -48,29 +62,39 @@ namespace NzbDrone.Core.MetadataSource.Tvdb
                 return null;
             }
 
-            return _tokenCache.Get("token", () =>
+            var cachedToken = _tokenCache.Find("token");
+
+            if (cachedToken != null)
             {
-                var loginRequest = new HttpRequestBuilder("https://api4.thetvdb.com/v4/login")
-                    .Post()
-                    .Accept(HttpAccept.Json)
-                    .Build();
+                return cachedToken;
+            }
 
-                loginRequest.Headers.ContentType = "application/json";
-                loginRequest.SetContent(new { apikey = apiKey, pin = _configFileProvider.TvdbSubscriberPin }.ToJson());
-                loginRequest.SuppressHttpError = true;
+            var loginRequest = new HttpRequestBuilder("https://api4.thetvdb.com/v4/login")
+                .Post()
+                .Accept(HttpAccept.Json)
+                .Build();
 
-                var loginResponse = _httpClient.Post<string>(loginRequest);
+            loginRequest.Headers.ContentType = "application/json";
+            loginRequest.SetContent(new { apikey = apiKey, pin = _configFileProvider.TvdbSubscriberPin }.ToJson());
+            loginRequest.SuppressHttpError = true;
 
-                if (loginResponse.HasHttpError || string.IsNullOrWhiteSpace(loginResponse.Resource))
-                {
-                    _logger.Warn("TVDB v4 login failed, check the TvdbApiKey and TvdbSubscriberPin values in config.xml");
-                    return null;
-                }
+            var loginResponse = _httpClient.Post<string>(loginRequest);
 
-                var parsedLogin = JsonConvert.DeserializeObject<TvdbLoginResponse>(loginResponse.Resource);
+            if (loginResponse.HasHttpError || string.IsNullOrWhiteSpace(loginResponse.Resource))
+            {
+                _logger.Warn("TVDB v4 login failed, check the TvdbApiKey and TvdbSubscriberPin values in config.xml");
+                return null;
+            }
 
-                return parsedLogin?.Data?.Token;
-            }, TokenTtl);
+            var token = JsonConvert.DeserializeObject<TvdbLoginResponse>(loginResponse.Resource)?.Data?.Token;
+
+            // Only cache successful logins so corrected credentials or a recovered outage retry immediately.
+            if (token != null)
+            {
+                _tokenCache.Set("token", token, TokenTtl);
+            }
+
+            return token;
         }
 
         private List<TvdbEpisodeOrderMapping> FetchEpisodeMappings(int tvdbSeriesId, EpisodeOrderingType orderingType)
@@ -90,28 +114,42 @@ namespace NzbDrone.Core.MetadataSource.Tvdb
                 return [];
             }
 
-            var request = new HttpRequestBuilder($"https://api4.thetvdb.com/v4/series/{tvdbSeriesId}/episodes/{orderType}")
-                .SetHeader("Authorization", $"Bearer {token}")
-                .Build();
+            // The season-type endpoint is paged and returns episodes under data.episodes.
+            var episodes = new List<TvdbEpisodeOrderEpisode>();
 
-            request.SuppressHttpError = true;
-
-            var response = _httpClient.Get<string>(request);
-
-            if (response.HasHttpError || string.IsNullOrWhiteSpace(response.Resource))
+            for (var page = 0; page < 50; page++)
             {
-                _logger.Warn("TVDB episode ordering call failed for series {0} ({1})", tvdbSeriesId, orderingType);
-                return [];
+                var request = new HttpRequestBuilder($"https://api4.thetvdb.com/v4/series/{tvdbSeriesId}/episodes/{orderType}")
+                    .AddQueryParam("page", page)
+                    .SetHeader("Authorization", $"Bearer {token}")
+                    .Build();
+
+                request.SuppressHttpError = true;
+
+                var response = _httpClient.Get<string>(request);
+
+                if (response.HasHttpError || string.IsNullOrWhiteSpace(response.Resource))
+                {
+                    _logger.Warn("TVDB episode ordering call failed for series {0} ({1})", tvdbSeriesId, orderingType);
+                    return [];
+                }
+
+                var parsed = JsonConvert.DeserializeObject<TvdbEpisodeOrderResponse>(response.Resource);
+
+                if (parsed?.Data?.Episodes == null)
+                {
+                    return [];
+                }
+
+                episodes.AddRange(parsed.Data.Episodes);
+
+                if (string.IsNullOrWhiteSpace(parsed.Links?.Next))
+                {
+                    break;
+                }
             }
 
-            var parsed = JsonConvert.DeserializeObject<TvdbEpisodeOrderResponse>(response.Resource);
-
-            if (parsed?.Data == null)
-            {
-                return [];
-            }
-
-            return parsed.Data.Where(d => d.Id > 0 && d.SeasonNumber >= 0 && d.Number > 0)
+            return episodes.Where(d => d.Id > 0 && d.SeasonNumber >= 0 && d.Number > 0)
                 .Select(d => new TvdbEpisodeOrderMapping
                 {
                     TvdbEpisodeId = d.Id,
@@ -136,7 +174,22 @@ namespace NzbDrone.Core.MetadataSource.Tvdb
         private class TvdbEpisodeOrderResponse
         {
             [JsonProperty("data")]
-            public List<TvdbEpisodeOrderEpisode> Data { get; set; }
+            public TvdbEpisodeOrderData Data { get; set; }
+
+            [JsonProperty("links")]
+            public TvdbLinks Links { get; set; }
+        }
+
+        private class TvdbEpisodeOrderData
+        {
+            [JsonProperty("episodes")]
+            public List<TvdbEpisodeOrderEpisode> Episodes { get; set; }
+        }
+
+        private class TvdbLinks
+        {
+            [JsonProperty("next")]
+            public string Next { get; set; }
         }
 
         private class TvdbEpisodeOrderEpisode

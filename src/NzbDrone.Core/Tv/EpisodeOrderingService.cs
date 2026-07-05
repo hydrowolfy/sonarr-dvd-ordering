@@ -66,6 +66,28 @@ namespace NzbDrone.Core.Tv
 
             var byTvdbId = mappings.GroupBy(m => m.TvdbEpisodeId).ToDictionary(g => g.Key, g => g.First());
 
+            // With partial mapping coverage a remapped episode can collide with an unmapped aired episode,
+            // which would silently drop one of them during refresh. Verify the resulting numbering is
+            // collision free before applying, otherwise fall back to aired ordering.
+            var proposedNumbering = episodes.Select(episode =>
+                byTvdbId.TryGetValue(episode.TvdbId, out var mapping)
+                    ? (Season: mapping.SeasonNumber, Episode: mapping.EpisodeNumber)
+                    : (Season: episode.SeasonNumber, Episode: episode.EpisodeNumber))
+                .ToList();
+
+            if (proposedNumbering.GroupBy(v => v).Any(g => g.Count() > 1))
+            {
+                _logger.Warn("{0} ordering for '{1}' ({2}) results in duplicate season/episode numbers (incomplete mapping coverage), falling back to aired ordering", series.EpisodeOrdering, series.Title, series.TvdbId);
+                return episodes;
+            }
+
+            var unmappedCount = episodes.Count(e => !byTvdbId.ContainsKey(e.TvdbId));
+
+            if (unmappedCount > 0)
+            {
+                _logger.Debug("{0} ordering for '{1}' ({2}) has no mapping for {3} episode(s), keeping aired numbering for those", series.EpisodeOrdering, series.Title, series.TvdbId, unmappedCount);
+            }
+
             foreach (var episode in episodes)
             {
                 if (!byTvdbId.TryGetValue(episode.TvdbId, out var mapping))
