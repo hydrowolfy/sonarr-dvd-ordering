@@ -222,6 +222,13 @@ namespace NzbDrone.Core.Parser
             {
                 remoteEpisode.Series = series;
 
+                if (series.EpisodeOrdering != EpisodeOrderingType.Aired)
+                {
+                    // The user has pinned this series to a specific episode ordering, use the numbering from the release as-is.
+                    sceneSource = false;
+                    remoteEpisode.MappedSeasonNumber = parsedEpisodeInfo.SeasonNumber;
+                }
+
                 if (ValidateParsedEpisodeInfo.ValidateForSeriesType(parsedEpisodeInfo, series))
                 {
                     remoteEpisode.Episodes = GetEpisodes(parsedEpisodeInfo, series, remoteEpisode.MappedSeasonNumber, sceneSource, searchCriteria);

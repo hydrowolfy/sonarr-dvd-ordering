@@ -10,7 +10,7 @@ using NzbDrone.Core.Tv.Events;
 
 namespace NzbDrone.Core.DataAugmentation.Xem
 {
-    public class XemService : ISceneMappingProvider, IHandle<SeriesUpdatedEvent>, IHandle<SeriesRefreshStartingEvent>
+    public class XemService : ISceneMappingProvider, IHandle<SeriesUpdatedEvent>, IHandle<SeriesEditedEvent>, IHandle<SeriesRefreshStartingEvent>
     {
         private readonly IEpisodeService _episodeService;
         private readonly IXemProxy _xemProxy;
@@ -37,6 +37,12 @@ namespace NzbDrone.Core.DataAugmentation.Xem
 
             try
             {
+                if (series.EpisodeOrdering != EpisodeOrderingType.Aired)
+                {
+                    RemoveSceneNumbering(series);
+                    return;
+                }
+
                 var mappings = _xemProxy.GetSceneTvdbMappings(series.TvdbId);
 
                 if (!mappings.Any() && !series.UseSceneNumbering)
@@ -230,6 +236,57 @@ namespace NzbDrone.Core.DataAugmentation.Xem
             var mappings = _xemProxy.GetSceneTvdbNames();
 
             return mappings;
+        }
+
+        private void RemoveSceneNumbering(Series series)
+        {
+            _logger.Debug("Episode ordering for {0} is pinned to {1}, removing scene numbering", series, series.EpisodeOrdering);
+
+            var episodes = _episodeService.GetEpisodeBySeries(series.Id);
+            var changedEpisodes = episodes.Where(v => v.SceneAbsoluteEpisodeNumber.HasValue ||
+                                                      v.SceneSeasonNumber.HasValue ||
+                                                      v.SceneEpisodeNumber.HasValue ||
+                                                      v.UnverifiedSceneNumbering)
+                                          .ToList();
+
+            foreach (var episode in changedEpisodes)
+            {
+                episode.SceneAbsoluteEpisodeNumber = null;
+                episode.SceneSeasonNumber = null;
+                episode.SceneEpisodeNumber = null;
+                episode.UnverifiedSceneNumbering = false;
+            }
+
+            if (changedEpisodes.Any())
+            {
+                _episodeService.UpdateEpisodes(changedEpisodes);
+            }
+
+            if (series.UseSceneNumbering)
+            {
+                series.UseSceneNumbering = false;
+                _seriesService.UpdateSeries(series);
+            }
+        }
+
+        public void Handle(SeriesEditedEvent message)
+        {
+            if (message.OldSeries == null || message.Series.EpisodeOrdering == message.OldSeries.EpisodeOrdering)
+            {
+                return;
+            }
+
+            if (message.Series.EpisodeOrdering != EpisodeOrderingType.Aired)
+            {
+                RemoveSceneNumbering(message.Series);
+                return;
+            }
+
+            // Ordering switched back to Aired, reapply mappings if XEM has this series
+            if (_cache.Count != 0 && _cache.Find(message.Series.TvdbId.ToString()))
+            {
+                PerformUpdate(message.Series);
+            }
         }
 
         public void Handle(SeriesUpdatedEvent message)
