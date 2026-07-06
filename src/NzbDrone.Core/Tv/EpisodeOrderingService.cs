@@ -36,6 +36,11 @@ namespace NzbDrone.Core.Tv
 
         public List<Episode> ApplyEpisodeOrdering(Series series, List<Episode> episodes)
         {
+            if (episodes == null || episodes.Count == 0)
+            {
+                return episodes;
+            }
+
             if (series.EpisodeOrdering == EpisodeOrderingType.Aired)
             {
                 return episodes;
@@ -58,7 +63,7 @@ namespace NzbDrone.Core.Tv
                 return episodes;
             }
 
-            if (mappings.Count == 0)
+            if (mappings == null || mappings.Count == 0)
             {
                 _logger.Warn("No {0} ordering data available for '{1}' ({2}), falling back to aired ordering", series.EpisodeOrdering, series.Title, series.TvdbId);
                 return episodes;

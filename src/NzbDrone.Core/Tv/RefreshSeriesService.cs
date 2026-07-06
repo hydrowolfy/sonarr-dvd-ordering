@@ -131,19 +131,22 @@ namespace NzbDrone.Core.Tv
             episodes = _episodeOrderingService.ApplyEpisodeOrdering(series, episodes);
 
             // The ordering overlay can move episodes into seasons that don't exist in the aired season list.
-            var missingSeasonNumbers = episodes.Select(e => e.SeasonNumber)
-                                               .Distinct()
-                                               .Where(seasonNumber => series.Seasons.All(s => s.SeasonNumber != seasonNumber))
-                                               .OrderBy(seasonNumber => seasonNumber)
-                                               .ToList();
-
-            foreach (var seasonNumber in missingSeasonNumbers)
+            if (episodes != null && (series.EpisodeOrdering == EpisodeOrderingType.Dvd || series.EpisodeOrdering == EpisodeOrderingType.Alternate))
             {
-                series.Seasons.Add(new Season
+                var missingSeasonNumbers = episodes.Select(e => e.SeasonNumber)
+                                                   .Distinct()
+                                                   .Where(seasonNumber => series.Seasons.All(s => s.SeasonNumber != seasonNumber))
+                                                   .OrderBy(seasonNumber => seasonNumber)
+                                                   .ToList();
+
+                foreach (var seasonNumber in missingSeasonNumbers)
                 {
-                    SeasonNumber = seasonNumber,
-                    Monitored = series.MonitorNewItems != NewItemMonitorTypes.None
-                });
+                    series.Seasons.Add(new Season
+                    {
+                        SeasonNumber = seasonNumber,
+                        Monitored = series.MonitorNewItems != NewItemMonitorTypes.None
+                    });
+                }
             }
 
             _seriesService.UpdateSeries(series, publishUpdatedEvent: false);

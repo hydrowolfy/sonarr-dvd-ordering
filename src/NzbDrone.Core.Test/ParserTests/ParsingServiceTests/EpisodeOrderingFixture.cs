@@ -45,10 +45,15 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
 
         private void GivenSceneMapping()
         {
+            Mocker.GetMock<ISeriesService>()
+                  .Setup(s => s.FindByTvdbId(_series.TvdbId))
+                  .Returns(_series);
+
             Mocker.GetMock<ISceneMappingService>()
                   .Setup(s => s.FindSceneMapping(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                   .Returns(new SceneMapping
                   {
+                      TvdbId = _series.TvdbId,
                       Title = "American Dad!",
                       SearchTerm = "American Dad!",
                       SeasonNumber = 14,
