@@ -78,15 +78,15 @@ namespace NzbDrone.Core.MetadataSource.Tvdb
             loginRequest.SetContent(new { apikey = apiKey, pin = _configFileProvider.TvdbSubscriberPin }.ToJson());
             loginRequest.SuppressHttpError = true;
 
-            var loginResponse = _httpClient.Post<string>(loginRequest);
+            var loginResponse = _httpClient.Post(loginRequest);
 
-            if (loginResponse.HasHttpError || string.IsNullOrWhiteSpace(loginResponse.Resource))
+            if (loginResponse.HasHttpError || string.IsNullOrWhiteSpace(loginResponse.Content))
             {
                 _logger.Warn("TVDB v4 login failed, check the TvdbApiKey and TvdbSubscriberPin values in config.xml");
                 return null;
             }
 
-            var token = JsonConvert.DeserializeObject<TvdbLoginResponse>(loginResponse.Resource)?.Data?.Token;
+            var token = JsonConvert.DeserializeObject<TvdbLoginResponse>(loginResponse.Content)?.Data?.Token;
 
             // Only cache successful logins so corrected credentials or a recovered outage retry immediately.
             if (token != null)
@@ -126,15 +126,15 @@ namespace NzbDrone.Core.MetadataSource.Tvdb
 
                 request.SuppressHttpError = true;
 
-                var response = _httpClient.Get<string>(request);
+                var response = _httpClient.Get(request);
 
-                if (response.HasHttpError || string.IsNullOrWhiteSpace(response.Resource))
+                if (response.HasHttpError || string.IsNullOrWhiteSpace(response.Content))
                 {
                     _logger.Warn("TVDB episode ordering call failed for series {0} ({1})", tvdbSeriesId, orderingType);
                     return [];
                 }
 
-                var parsed = JsonConvert.DeserializeObject<TvdbEpisodeOrderResponse>(response.Resource);
+                var parsed = JsonConvert.DeserializeObject<TvdbEpisodeOrderResponse>(response.Content);
 
                 if (parsed?.Data?.Episodes == null)
                 {
