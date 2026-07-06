@@ -217,3 +217,19 @@ runs:
           echo '```'
         } > /tmp/sonarr_comment.md
         gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" -F "body=@/tmp/sonarr_comment.md" || true
+
+    - name: Publish win-x64 package to test-build branch (temporary)
+      if: ${{ inputs.runtime == 'win-x64' }}
+      shell: bash
+      run: |
+        cd _artifacts/win-x64/*/
+        zip -qr /tmp/sonarr-win-x64.zip Sonarr
+        cd "$GITHUB_WORKSPACE"
+        rm -rf /tmp/pkgrepo && mkdir /tmp/pkgrepo && cd /tmp/pkgrepo
+        git init -q -b test-build
+        split -b 90m /tmp/sonarr-win-x64.zip sonarr-win-x64.zip.part.
+        sha256sum sonarr-win-x64.zip.part.* > checksums.txt
+        echo "Built from ${GITHUB_SHA} on $(date -u)" > BUILD_INFO.txt
+        git add -A
+        git -c user.email=ci@local -c user.name=CI commit -qm "win-x64 test build ${GITHUB_SHA}"
+        git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" test-build
