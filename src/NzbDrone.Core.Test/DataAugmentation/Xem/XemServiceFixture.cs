@@ -56,9 +56,7 @@ namespace NzbDrone.Core.Test.DataAugmentation.Xem
                   .Verify(v => v.GetSceneTvdbMappings(It.IsAny<int>()), Times.Never());
 
             Mocker.GetMock<IEpisodeService>()
-                  .Verify(v => v.UpdateEpisodes(It.Is<List<Episode>>(e =>
-                      e.Count == 2 &&
-                      e.All(x => x.SceneSeasonNumber == null && x.SceneEpisodeNumber == null && x.SceneAbsoluteEpisodeNumber == null))), Times.Once());
+                  .Verify(v => v.UpdateEpisodes(It.Is<List<Episode>>(e => e.Count == 2 && e.All(x => x.SceneSeasonNumber == null && x.SceneEpisodeNumber == null && x.SceneAbsoluteEpisodeNumber == null))), Times.Once());
 
             Mocker.GetMock<ISeriesService>()
                   .Verify(v => v.UpdateSeries(It.Is<Series>(s => s.UseSceneNumbering == false), It.IsAny<bool>(), It.IsAny<bool>()), Times.Once());
