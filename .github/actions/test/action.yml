@@ -81,7 +81,9 @@ runs:
 
     - name: Run tests
       shell: bash
-      run: dotnet test ./_tests/Sonarr.*.Test.dll --filter "${{ inputs.filter }}" --logger "trx;LogFileName=${{ env.RESULTS_NAME }}.trx" --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true"
+      run: |
+        dotnet test ./_tests/Sonarr.*.Test.dll --filter "${{ inputs.filter }}" --logger "trx;LogFileName=${{ env.RESULTS_NAME }}.trx" --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true" 2>&1 | tee /tmp/sonarr_test.log
+        exit ${PIPESTATUS[0]}
 
     - name: Upload Test Results
       if: ${{ !cancelled() }}
@@ -89,3 +91,26 @@ runs:
       with:
         name: results-${{ env.RESULTS_NAME }}
         path: TestResults/*.trx
+
+    - name: Report failure to PR (temporary CI debug aid)
+      if: ${{ failure() }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        PR_NUMBER="${{ github.event.pull_request.number }}"
+        if [ -z "$PR_NUMBER" ]; then PR_NUMBER=2; fi
+        {
+          echo "**CI test failure report** for \`${{ env.RESULTS_NAME }}\` (temporary debug aid)"
+          echo ""
+          echo '```'
+          if [ -f /tmp/sonarr_test.log ]; then
+            grep -E "^  (Failed|Error)|Failed!|error " /tmp/sonarr_test.log | head -n 60
+            echo "----- failing test details -----"
+            grep -A 12 "Failed .*\[" /tmp/sonarr_test.log | head -n 120
+          else
+            echo "No test log captured - failure occurred before the Run tests step."
+          fi
+          echo '```'
+        } > /tmp/sonarr_comment.md
+        gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" -F "body=@/tmp/sonarr_comment.md" || true

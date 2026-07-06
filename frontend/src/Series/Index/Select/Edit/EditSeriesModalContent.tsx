@@ -21,6 +21,7 @@ interface SavePayload {
   qualityProfileId?: number;
   seriesType?: string;
   seasonFolder?: boolean;
+  episodeOrdering?: string;
   rootFolderPath?: string;
   moveFiles?: boolean;
 }
@@ -76,6 +77,40 @@ const seasonFolderOptions: EnhancedSelectInputValue<string>[] = [
   },
 ];
 
+const episodeOrderingOptions: EnhancedSelectInputValue<string>[] = [
+  {
+    key: NO_CHANGE,
+    get value() {
+      return translate('NoChange');
+    },
+    isDisabled: true,
+  },
+  {
+    key: 'aired',
+    get value() {
+      return translate('EpisodeOrderingAired');
+    },
+  },
+  {
+    key: 'absolute',
+    get value() {
+      return translate('EpisodeOrderingAbsolute');
+    },
+  },
+  {
+    key: 'dvd',
+    get value() {
+      return translate('EpisodeOrderingDvd');
+    },
+  },
+  {
+    key: 'alternate',
+    get value() {
+      return translate('EpisodeOrderingAlternate');
+    },
+  },
+];
+
 function EditSeriesModalContent(props: EditSeriesModalContentProps) {
   const { onSavePress, onModalClose } = props;
 
@@ -86,6 +121,7 @@ function EditSeriesModalContent(props: EditSeriesModalContentProps) {
   );
   const [seriesType, setSeriesType] = useState(NO_CHANGE);
   const [seasonFolder, setSeasonFolder] = useState(NO_CHANGE);
+  const [episodeOrdering, setEpisodeOrdering] = useState(NO_CHANGE);
   const [rootFolderPath, setRootFolderPath] = useState(NO_CHANGE);
   const [isConfirmMoveModalOpen, setIsConfirmMoveModalOpen] = useState(false);
   const { selectedCount } = useSelect();
@@ -120,6 +156,11 @@ function EditSeriesModalContent(props: EditSeriesModalContentProps) {
         payload.seasonFolder = seasonFolder === 'yes';
       }
 
+      if (episodeOrdering !== NO_CHANGE) {
+        hasChanges = true;
+        payload.episodeOrdering = episodeOrdering;
+      }
+
       if (rootFolderPath !== NO_CHANGE) {
         hasChanges = true;
         payload.rootFolderPath = rootFolderPath;
@@ -138,6 +179,7 @@ function EditSeriesModalContent(props: EditSeriesModalContentProps) {
       qualityProfileId,
       seriesType,
       seasonFolder,
+      episodeOrdering,
       rootFolderPath,
       onSavePress,
       onModalClose,
@@ -161,6 +203,9 @@ function EditSeriesModalContent(props: EditSeriesModalContentProps) {
           break;
         case 'seasonFolder':
           setSeasonFolder(value as string);
+          break;
+        case 'episodeOrdering':
+          setEpisodeOrdering(value as string);
           break;
         case 'rootFolderPath':
           setRootFolderPath(value as string);
@@ -259,6 +304,18 @@ function EditSeriesModalContent(props: EditSeriesModalContentProps) {
             name="seasonFolder"
             value={seasonFolder}
             values={seasonFolderOptions}
+            onChange={onInputChange}
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <FormLabel>{translate('EpisodeOrdering')}</FormLabel>
+
+          <FormInputGroup
+            type={inputTypes.SELECT}
+            name="episodeOrdering"
+            value={episodeOrdering}
+            values={episodeOrderingOptions}
             onChange={onInputChange}
           />
         </FormGroup>

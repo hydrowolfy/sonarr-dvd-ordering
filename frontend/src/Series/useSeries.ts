@@ -686,6 +686,7 @@ interface SaveSeriesEditorPayload {
   qualityProfileId?: number;
   seriesType?: string;
   seasonFolder?: boolean;
+  episodeOrdering?: string;
   rootFolderPath?: string;
   tags?: number[];
 }

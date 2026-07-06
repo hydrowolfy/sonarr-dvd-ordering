@@ -236,6 +236,7 @@ namespace NzbDrone.Core.IndexerSearch
         private IEnumerable<SceneEpisodeMapping> GetSceneEpisodeMappings(Series series, Episode episode, List<SceneMapping> sceneMappings)
         {
             var includeGlobal = true;
+            var pinnedOrdering = series.EpisodeOrdering != EpisodeOrderingType.Aired;
 
             foreach (var sceneMapping in sceneMappings)
             {
@@ -243,15 +244,26 @@ namespace NzbDrone.Core.IndexerSearch
                 // - Mapped on Release Season Number with sceneMapping.SceneSeasonNumber specified and optionally sceneMapping.SeasonNumber. This translates via episode.SceneSeasonNumber/SeasonNumber to specific episodes.
                 // - Mapped on Episode Season Number with optionally sceneMapping.SeasonNumber. This translates from episode.SceneSeasonNumber/SeasonNumber to specific releases. (Filter by episode.SeasonNumber or globally)
 
-                var ignoreSceneNumbering = sceneMapping.SceneOrigin == "tvdb" || sceneMapping.SceneOrigin == "unknown:tvdb";
+                var ignoreSceneNumbering = pinnedOrdering || sceneMapping.SceneOrigin == "tvdb" || sceneMapping.SceneOrigin == "unknown:tvdb";
                 var mappingSceneSeasonNumber = sceneMapping.SceneSeasonNumber.NonNegative();
                 var mappingSeasonNumber = sceneMapping.SeasonNumber.NonNegative();
 
                 // Select scene or tvdb on the episode
                 var mappedSeasonNumber = ignoreSceneNumbering ? episode.SeasonNumber : (episode.SceneSeasonNumber ?? episode.SeasonNumber);
-                var releaseSeasonNumber = sceneMapping.SceneSeasonNumber.NonNegative() ?? mappedSeasonNumber;
+                var releaseSeasonNumber = pinnedOrdering ? episode.SeasonNumber : (sceneMapping.SceneSeasonNumber.NonNegative() ?? mappedSeasonNumber);
 
-                if (mappingSceneSeasonNumber.HasValue)
+                if (pinnedOrdering)
+                {
+                    // The user has pinned this series to a specific episode ordering, only use mappings as
+                    // alternative title sources and check applicability against the episode's season number.
+                    var applicableSeasonNumber = sceneMapping.SeasonNumber.NonNegative() ?? sceneMapping.SceneSeasonNumber.NonNegative();
+
+                    if (applicableSeasonNumber.HasValue && applicableSeasonNumber.Value != episode.SeasonNumber)
+                    {
+                        continue;
+                    }
+                }
+                else if (mappingSceneSeasonNumber.HasValue)
                 {
                     // Apply the alternative mapping (release to scene/tvdb)
                     var mappedAltSeasonNumber = sceneMapping.SeasonNumber.NonNegative() ?? sceneMapping.SceneSeasonNumber.NonNegative() ?? mappedSeasonNumber;
@@ -313,9 +325,9 @@ namespace NzbDrone.Core.IndexerSearch
                     Episode = episode,
                     SearchMode = SearchMode.Default,
                     SceneTitles = new List<string> { series.Title },
-                    SeasonNumber = episode.SceneSeasonNumber ?? episode.SeasonNumber,
-                    EpisodeNumber = episode.SceneEpisodeNumber ?? episode.EpisodeNumber,
-                    AbsoluteEpisodeNumber = episode.SceneSeasonNumber ?? episode.AbsoluteEpisodeNumber
+                    SeasonNumber = pinnedOrdering ? episode.SeasonNumber : (episode.SceneSeasonNumber ?? episode.SeasonNumber),
+                    EpisodeNumber = pinnedOrdering ? episode.EpisodeNumber : (episode.SceneEpisodeNumber ?? episode.EpisodeNumber),
+                    AbsoluteEpisodeNumber = pinnedOrdering ? episode.AbsoluteEpisodeNumber : (episode.SceneSeasonNumber ?? episode.AbsoluteEpisodeNumber)
                 };
             }
         }
@@ -356,9 +368,18 @@ namespace NzbDrone.Core.IndexerSearch
 
             searchSpec.IsSeasonSearch = isSeasonSearch;
 
-            searchSpec.SeasonNumber = episode.SceneSeasonNumber ?? episode.SeasonNumber;
-            searchSpec.EpisodeNumber = episode.SceneEpisodeNumber ?? episode.EpisodeNumber;
-            searchSpec.AbsoluteEpisodeNumber = episode.SceneAbsoluteEpisodeNumber ?? episode.AbsoluteEpisodeNumber ?? 0;
+            if (series.EpisodeOrdering != EpisodeOrderingType.Aired)
+            {
+                searchSpec.SeasonNumber = episode.SeasonNumber;
+                searchSpec.EpisodeNumber = episode.EpisodeNumber;
+                searchSpec.AbsoluteEpisodeNumber = episode.AbsoluteEpisodeNumber ?? 0;
+            }
+            else
+            {
+                searchSpec.SeasonNumber = episode.SceneSeasonNumber ?? episode.SeasonNumber;
+                searchSpec.EpisodeNumber = episode.SceneEpisodeNumber ?? episode.EpisodeNumber;
+                searchSpec.AbsoluteEpisodeNumber = episode.SceneAbsoluteEpisodeNumber ?? episode.AbsoluteEpisodeNumber ?? 0;
+            }
 
             var downloadDecisions = await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
 

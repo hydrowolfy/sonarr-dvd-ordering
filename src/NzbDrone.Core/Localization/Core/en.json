@@ -2246,5 +2246,11 @@
   "Yes": "Yes",
   "YesCancel": "Yes, Cancel",
   "Yesterday": "Yesterday",
-  "YesterdayAt": "Yesterday at {time}"
+  "YesterdayAt": "Yesterday at {time}",
+  "EpisodeOrdering": "Episode Ordering",
+  "EpisodeOrderingAired": "Aired (Default)",
+  "EpisodeOrderingAbsolute": "Absolute",
+  "EpisodeOrderingDvd": "DVD",
+  "EpisodeOrderingHelpText": "Numbering scheme used for this series. Anything other than 'Aired' disables scene numbering mappings (e.g. from TheXEM) and uses the selected order everywhere. DVD and Production / Alternate orders require a TheTVDB v4 API key in config.xml",
+  "EpisodeOrderingAlternate": "Production / Alternate"
 }

@@ -194,6 +194,7 @@ public class SeriesController : RestControllerWithSignalR<SeriesResource, NzbDro
     public ActionResult<SeriesResource> UpdateSeries([FromBody] SeriesResource seriesResource, [FromQuery] bool moveFiles = false)
     {
         var series = _seriesService.GetSeries(seriesResource.Id);
+        var oldEpisodeOrdering = series.EpisodeOrdering;
 
         if (moveFiles)
         {
@@ -212,6 +213,11 @@ public class SeriesController : RestControllerWithSignalR<SeriesResource, NzbDro
         var model = seriesResource.ToModel(series);
 
         _seriesService.UpdateSeries(model);
+
+        if (model.EpisodeOrdering != oldEpisodeOrdering)
+        {
+            _commandQueueManager.Push(new RefreshSeriesCommand(new List<int> { series.Id }), trigger: CommandTrigger.Manual);
+        }
 
         BroadcastResourceChange(ModelAction.Updated, seriesResource);
 
