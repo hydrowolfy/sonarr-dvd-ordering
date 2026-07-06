@@ -92,7 +92,9 @@ runs:
 
         echo "Building Sonarr for $runtime, Platform: $platform"
 
-        dotnet msbuild -restore $slnFile -p:SelfContained=true -p:Configuration=Release -p:Platform=$platform -p:RuntimeIdentifiers=$runtime -p:EnableWindowsTargeting=true -t:PublishAllRids
+        dotnet --info 2>&1 | head -20 > /tmp/sonarr_build.log || true
+        dotnet msbuild -restore $slnFile -p:SelfContained=true -p:Configuration=Release -p:Platform=$platform -p:RuntimeIdentifiers=$runtime -p:EnableWindowsTargeting=true -t:PublishAllRids 2>&1 | tee -a /tmp/sonarr_build.log
+        exit ${PIPESTATUS[0]}
 
     - name: Package
       shell: bash
@@ -192,3 +194,26 @@ runs:
       with:
         name: build-${{ inputs.runtime }}
         path: _artifacts/**/*
+
+    - name: Report failure to PR (temporary CI debug aid)
+      if: ${{ failure() }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        PR_NUMBER="${{ github.event.pull_request.number }}"
+        if [ -z "$PR_NUMBER" ]; then PR_NUMBER=2; fi
+        {
+          echo "**CI failure report** for \`${{ inputs.runtime }}\` (temporary debug aid)"
+          echo ""
+          echo '```'
+          if [ -f /tmp/sonarr_build.log ]; then
+            grep -iE "error|Unhandled|not found|not compatible" /tmp/sonarr_build.log | tail -n 40
+            echo "----- last 25 lines -----"
+            tail -n 25 /tmp/sonarr_build.log
+          else
+            echo "No build log captured - failure occurred before the Build Backend step."
+          fi
+          echo '```'
+        } > /tmp/sonarr_comment.md
+        gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" -F "body=@/tmp/sonarr_comment.md" || true
