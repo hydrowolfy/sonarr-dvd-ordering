@@ -1,23 +1,25 @@
 import { useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import AppState from 'App/State/AppState';
 import useSeries from 'Series/useSeries';
+import { useImportListsData } from 'Settings/ImportLists/ImportLists/useImportLists';
 
 function useQualityProfileInUse(id: number | undefined) {
   const { data: series = [] } = useSeries();
-  const importLists = useSelector(
-    (state: AppState) => state.settings.importLists.items
-  );
+  const importLists = useImportListsData();
 
   return useMemo(() => {
     if (!id) {
-      return false;
+      return {
+        seriesCount: 0,
+        importsCount: 0,
+      };
     }
 
-    return (
-      series.some((s) => s.qualityProfileId === id) ||
-      importLists.some((list) => list.qualityProfileId === id)
-    );
+    return {
+      seriesCount: series.filter((s) => s.qualityProfileId === id).length,
+      importListCount: importLists.filter(
+        (list) => list.qualityProfileId === id
+      ).length,
+    };
   }, [id, series, importLists]);
 }
 

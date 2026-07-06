@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import ProtocolLabel from 'Activity/Queue/ProtocolLabel';
 import Card from 'Components/Card';
 import Label from 'Components/Label';
 import IconButton from 'Components/Link/IconButton';
@@ -19,6 +20,7 @@ interface IndexerProps extends IndexerModel {
 function Indexer({
   id,
   name,
+  protocol,
   enableRss,
   enableAutomaticSearch,
   enableInteractiveSearch,
@@ -65,6 +67,7 @@ function Indexer({
     <Card
       className={styles.indexer}
       overlayContent={true}
+      aria-label={translate('EditIndexerName', { name })}
       onPress={handleEditIndexerPress}
     >
       <div className={styles.nameContainer}>
@@ -73,12 +76,15 @@ function Indexer({
         <IconButton
           className={styles.cloneButton}
           title={translate('CloneIndexer')}
+          aria-label={translate('CloneIndexer')}
           name={icons.CLONE}
           onPress={handleCloneIndexerPress}
         />
       </div>
 
       <div className={styles.enabled}>
+        <ProtocolLabel protocol={protocol} />
+
         {supportsRss && enableRss ? (
           <Label kind={kinds.SUCCESS}>{translate('Rss')}</Label>
         ) : null}

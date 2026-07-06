@@ -13,6 +13,7 @@ import RelativeDateCell from 'Components/Table/Cells/RelativeDateCell';
 import VirtualTableRowCell from 'Components/Table/Cells/VirtualTableRowCell';
 import VirtualTableSelectCell from 'Components/Table/Cells/VirtualTableSelectCell';
 import Column from 'Components/Table/Column';
+import getReleaseTypeName from 'Episode/getReleaseTypeName';
 import { icons } from 'Helpers/Props';
 import useCountryName from 'Internationalization/useCountryName';
 import DeleteSeriesModal from 'Series/Delete/DeleteSeriesModal';
@@ -149,6 +150,8 @@ function SeriesIndexRow(props: SeriesIndexRowProps) {
     totalEpisodeCount = 0,
     sizeOnDisk = 0,
     releaseGroups = [],
+    releaseTypes = [],
+    episodeFileQualities = [],
   } = statistics;
 
   return (
@@ -396,6 +399,17 @@ function SeriesIndexRow(props: SeriesIndexRowProps) {
           );
         }
 
+        if (name === 'averageSizePerEpisode') {
+          const averageSize =
+            totalEpisodeCount > 0 ? sizeOnDisk / totalEpisodeCount : 0;
+
+          return (
+            <VirtualTableRowCell key={name} className={styles[name]}>
+              {averageSize ? formatBytes(averageSize) : null}
+            </VirtualTableRowCell>
+          );
+        }
+
         if (name === 'genres') {
           const joinedGenres = genres.join(', ');
 
@@ -432,6 +446,44 @@ function SeriesIndexRow(props: SeriesIndexRowProps) {
           return (
             <VirtualTableRowCell key={name} className={styles[name]}>
               <span title={joinedReleaseGroups}>{truncatedReleaseGroups}</span>
+            </VirtualTableRowCell>
+          );
+        }
+
+        if (name === 'releaseTypes') {
+          const joinedReleaseTypes = releaseTypes
+            .map(getReleaseTypeName)
+            .join(', ');
+          const truncatedReleaseTypes =
+            releaseTypes.length > 3
+              ? `${releaseTypes
+                  .slice(0, 3)
+                  .map(getReleaseTypeName)
+                  .join(', ')}...`
+              : joinedReleaseTypes;
+
+          return (
+            <VirtualTableRowCell key={name} className={styles[name]}>
+              <span title={joinedReleaseTypes}>{truncatedReleaseTypes}</span>
+            </VirtualTableRowCell>
+          );
+        }
+
+        if (name === 'episodeFileQualities') {
+          const joinedQualities = episodeFileQualities
+            .map((q) => q.name)
+            .join(', ');
+          const truncatedQualities =
+            episodeFileQualities.length > 3
+              ? `${episodeFileQualities
+                  .slice(0, 3)
+                  .map((q) => q.name)
+                  .join(', ')}...`
+              : joinedQualities;
+
+          return (
+            <VirtualTableRowCell key={name} className={styles[name]}>
+              <span title={joinedQualities}>{truncatedQualities}</span>
             </VirtualTableRowCell>
           );
         }
@@ -490,6 +542,7 @@ function SeriesIndexRow(props: SeriesIndexRowProps) {
               <IconButton
                 name={icons.EDIT}
                 title={translate('EditSeries')}
+                aria-label={translate('EditSeries')}
                 onPress={onEditSeriesPress}
               />
             </VirtualTableRowCell>

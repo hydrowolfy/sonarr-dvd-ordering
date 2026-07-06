@@ -20,6 +20,7 @@ import TablePager from 'Components/Table/TablePager';
 import Episode from 'Episode/Episode';
 import { useToggleEpisodesMonitored } from 'Episode/useEpisode';
 import { Filter } from 'Filters/Filter';
+import { useCustomFiltersList } from 'Filters/useCustomFilters';
 import { align, icons, kinds } from 'Helpers/Props';
 import { SortDirection } from 'Helpers/Props/sortDirections';
 import InteractiveImportModal from 'InteractiveImport/InteractiveImportModal';
@@ -32,6 +33,8 @@ import {
   unregisterPagePopulator,
 } from 'Utilities/pagePopulator';
 import translate from 'Utilities/String/translate';
+import toWantedSearchCommandBody from 'Wanted/toWantedSearchCommandBody';
+import MissingFilterModal from './MissingFilterModal';
 import {
   setMissingOption,
   setMissingOptions,
@@ -39,7 +42,7 @@ import {
   useMissingOptions,
 } from './missingOptionsStore';
 import MissingRow from './MissingRow';
-import useMissing, { FILTERS } from './useMissing';
+import useMissing, { FILTERS, useFilters } from './useMissing';
 
 function getMonitoredValue(
   filters: Filter[],
@@ -61,10 +64,14 @@ function MissingContent() {
     page,
     goToPage,
     refetch,
+    filters: activeFilters,
   } = useMissing();
 
   const { columns, pageSize, sortKey, sortDirection, selectedFilterKey } =
     useMissingOptions();
+
+  const filters = useFilters();
+  const customFilters = useCustomFiltersList('wanted.missing');
 
   const isSearchingForAllEpisodes = useCommandExecuting(
     CommandNames.MissingEpisodeSearch
@@ -133,16 +140,17 @@ function MissingContent() {
 
   const handleSearchAllMissingConfirmed = useCallback(() => {
     executeCommand(
-      {
-        name: CommandNames.MissingEpisodeSearch,
-      },
+      toWantedSearchCommandBody(
+        CommandNames.MissingEpisodeSearch,
+        activeFilters
+      ),
       () => {
         refetch();
       }
     );
 
     setIsConfirmSearchAllModalOpen(false);
-  }, [executeCommand, refetch]);
+  }, [activeFilters, executeCommand, refetch]);
 
   const handleToggleSelectedPress = useCallback(() => {
     toggleEpisodesMonitored({
@@ -257,8 +265,9 @@ function MissingContent() {
             <FilterMenu
               alignMenu={align.RIGHT}
               selectedFilterKey={selectedFilterKey}
-              filters={FILTERS}
-              customFilters={[]}
+              filters={filters}
+              customFilters={customFilters}
+              filterModalConnectorComponent={MissingFilterModal}
               onFilterSelect={handleFilterSelect}
             />
           </PageToolbarSection>

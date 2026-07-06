@@ -45,7 +45,9 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
                 throw new FileNotFoundException("Media file does not exist: " + filename);
             }
 
-            if (MediaFileExtensions.DiskExtensions.Contains(Path.GetExtension(filename)))
+            if (MediaFileExtensions.DiskExtensions
+                .Concat(MediaFileExtensions.StreamingExtensions)
+                .Contains(Path.GetExtension(filename)))
             {
                 return null;
             }
@@ -85,13 +87,12 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
                 mediaInfoModel.RawStreamData = string.Concat(analysis.OutputData);
 
                 mediaInfoModel.AudioStreams = analysis.AudioStreams?
-                    .Where(stream => stream.Language.IsNotNullOrWhiteSpace())
                     .OrderBy(stream => stream.Index)
                     .Select(stream =>
                     {
                         var model = new MediaInfoAudioStreamModel
                         {
-                            Language = stream.Language,
+                            Language = stream.Language.IsNotNullOrWhiteSpace() ? stream.Language : "und",
                             Format = stream.CodecName,
                             CodecId = stream.CodecTagString,
                             Profile = stream.Profile,

@@ -1,5 +1,7 @@
 import ModelBase from 'App/ModelBase';
+import ReleaseType from 'InteractiveImport/ReleaseType';
 import Language from 'Language/Language';
+import Quality from 'Quality/Quality';
 
 export type SeriesType = 'anime' | 'daily' | 'standard';
 export type SeriesMonitor =
@@ -34,10 +36,11 @@ export interface Statistics {
   percentOfEpisodes: number;
   previousAiring?: Date;
   releaseGroups: string[];
+  releaseTypes: ReleaseType[];
+  episodeFileQualities: Quality[];
   sizeOnDisk: number;
   totalEpisodeCount: number;
   monitoredEpisodeCount: number;
-  lastAired?: string;
 }
 
 export interface Season {
@@ -71,7 +74,8 @@ interface Series extends ModelBase {
   certification: string;
   cleanTitle: string;
   ended: boolean;
-  firstAired: string;
+  firstAired?: string;
+  lastAired?: string;
   genres: string[];
   images: Image[];
   imdbId?: string;

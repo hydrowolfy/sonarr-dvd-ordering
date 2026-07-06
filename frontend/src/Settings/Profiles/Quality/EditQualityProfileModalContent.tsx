@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 import Alert from 'Components/Alert';
 import Form from 'Components/Form/Form';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
+import Icon from 'Components/Icon';
 import Button from 'Components/Link/Button';
 import SpinnerErrorButton from 'Components/Link/SpinnerErrorButton';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
@@ -11,15 +13,17 @@ import ModalBody from 'Components/Modal/ModalBody';
 import ModalContent from 'Components/Modal/ModalContent';
 import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
+import Popover from 'Components/Tooltip/Popover';
 import useMeasure from 'Helpers/Hooks/useMeasure';
 import usePrevious from 'Helpers/Hooks/usePrevious';
-import { inputTypes, kinds, sizes } from 'Helpers/Props';
+import { icons, inputTypes, kinds, sizes } from 'Helpers/Props';
 import useQualityProfileInUse from 'Settings/Profiles/Quality/useQualityProfileInUse';
 import dimensions from 'Styles/Variables/dimensions';
 import { InputChanged } from 'typings/inputs';
 import translate from 'Utilities/String/translate';
 import QualityProfileFormatItems from './QualityProfileFormatItems';
 import { DragMoveState } from './QualityProfileItemDragSource';
+import { parseItemFailures } from './qualityProfileItemFailures';
 import QualityProfileItems, {
   EditQualityProfileMode,
 } from './QualityProfileItems';
@@ -62,14 +66,22 @@ function EditQualityProfileModalContent({
     item,
     isSaving,
     saveError,
-    isSchemaFetching,
+    isSchemaLoading,
     isSchemaFetched,
     schemaError,
     updateValue,
     saveProvider,
+    validationErrors,
+    validationWarnings,
   } = useManageQualityProfile(id, cloneId);
 
-  const isInUse = useQualityProfileInUse(id);
+  const itemFailures = useMemo(
+    () => parseItemFailures(validationErrors, validationWarnings),
+    [validationErrors, validationWarnings]
+  );
+
+  const { seriesCount, importListCount } = useQualityProfileInUse(id);
+  const isInUse = seriesCount !== 0 || importListCount !== 0;
 
   const [measureHeaderRef, { height: headerHeight }] = useMeasure();
   const [measureBodyRef, { height: bodyHeight }] = useMeasure();
@@ -279,6 +291,7 @@ function EditQualityProfileModalContent({
           } else {
             acc.push(item as QualityProfileQualityItem);
           }
+
           return acc;
         },
         []
@@ -434,7 +447,7 @@ function EditQualityProfileModalContent({
     setMode(newMode);
   }, []);
 
-  const handleFormatItemScoreChange = useCallback(
+  const handleFormatItemScoreChange = useDebouncedCallback(
     (formatId: number, score: number) => {
       const newFormatItems = formatItems.value.map((formatItem) => {
         if (formatItem.format === formatId) {
@@ -449,7 +462,7 @@ function EditQualityProfileModalContent({
 
       updateValue('formatItems', newFormatItems);
     },
-    [formatItems, updateValue]
+    1000
   );
 
   useEffect(() => {
@@ -526,7 +539,7 @@ function EditQualityProfileModalContent({
         <div ref={measureBodyRef}>
           {isSchemaFetched ? null : <LoadingIndicator />}
 
-          {!isSchemaFetching && schemaError ? (
+          {!isSchemaLoading && schemaError ? (
             <Alert kind={kinds.DANGER}>
               {translate('AddQualityProfileError')}
             </Alert>
@@ -651,6 +664,7 @@ function EditQualityProfileModalContent({
                     qualityProfileItems={items.value}
                     errors={items.errors}
                     warnings={items.warnings}
+                    itemFailures={itemFailures}
                     dragQualityIndex={dragQualityIndex}
                     dropQualityIndex={dropQualityIndex}
                     dropPosition={dropPosition}
@@ -699,6 +713,36 @@ function EditQualityProfileModalContent({
             >
               {translate('Delete')}
             </Button>
+
+            {isInUse ? (
+              <Popover
+                title={translate('QualityProfileUsage')}
+                body={
+                  <div>
+                    {seriesCount ? (
+                      <div>
+                        {translate('QualityProfileUsedInCountSeries', {
+                          count: seriesCount,
+                        })}
+                      </div>
+                    ) : null}
+                    {importListCount ? (
+                      <div>
+                        {translate('QualityProfileUsedInCountImportLists', {
+                          count: importListCount,
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
+                }
+                anchor={
+                  <Icon
+                    className={styles.deleteButtonInfoIcon}
+                    name={icons.INFO}
+                  />
+                }
+              />
+            ) : null}
           </div>
         ) : null}
 

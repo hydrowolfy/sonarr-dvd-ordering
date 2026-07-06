@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { setQueueOptions } from 'Activity/Queue/queueOptionsStore';
 import { SelectProvider, useSelect } from 'App/Select/SelectContext';
 import CommandNames from 'Commands/CommandNames';
 import { useCommandExecuting, useExecuteCommand } from 'Commands/useCommands';
@@ -30,6 +29,7 @@ import translate from 'Utilities/String/translate';
 import BlocklistFilterModal from './BlocklistFilterModal';
 import {
   setBlocklistOption,
+  setBlocklistOptions,
   setBlocklistSort,
   useBlocklistOptions,
 } from './blocklistOptionsStore';
@@ -109,9 +109,10 @@ function BlocklistContent() {
   const handleClearBlocklistConfirmed = useCallback(() => {
     executeCommand({ name: CommandNames.ClearBlocklist }, () => {
       goToPage(1);
+      refetch();
     });
     setIsConfirmClearModalOpen(false);
-  }, [setIsConfirmClearModalOpen, goToPage, executeCommand]);
+  }, [setIsConfirmClearModalOpen, executeCommand, goToPage, refetch]);
 
   const handleConfirmClearModalClose = useCallback(() => {
     setIsConfirmClearModalOpen(false);
@@ -136,7 +137,7 @@ function BlocklistContent() {
 
   const handleTableOptionChange = useCallback(
     (payload: TableOptionsChangePayload) => {
-      setQueueOptions(payload);
+      setBlocklistOptions(payload);
 
       if (payload.pageSize) {
         goToPage(1);

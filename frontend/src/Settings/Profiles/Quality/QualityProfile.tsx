@@ -68,6 +68,7 @@ function QualityProfile({
     <Card
       className={styles.qualityProfile}
       overlayContent={true}
+      aria-label={translate('EditQualityProfileName', { name })}
       onPress={handleEditQualityProfilePress}
     >
       <div className={styles.nameContainer}>
@@ -76,6 +77,7 @@ function QualityProfile({
         <IconButton
           className={styles.cloneButton}
           title={translate('CloneProfile')}
+          aria-label={translate('CloneProfile')}
           name={icons.CLONE}
           onPress={handleCloneQualityProfilePress}
         />

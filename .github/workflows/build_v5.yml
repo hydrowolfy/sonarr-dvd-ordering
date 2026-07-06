@@ -10,6 +10,7 @@ on:
   pull_request:
     branches:
       - v5-develop
+      - v5-redesign
     paths-ignore:
       - "src/NzbDrone.Core/Localization/Core/**"
       - "src/Sonarr.Api.*/openapi.json"
@@ -82,7 +83,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check out
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Build
         uses: ./.github/actions/build
@@ -97,10 +98,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Volta
-        uses: volta-cli/action@v4
+        uses: volta-cli/action@v5
 
       - name: Yarn Install
         run: yarn install
@@ -115,7 +116,7 @@ jobs:
         run: yarn build --env production
 
       - name: Publish UI Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build_ui
           path: _output/UI/**/*
@@ -139,7 +140,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check out
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Test
         uses: ./.github/actions/test
@@ -158,7 +159,7 @@ jobs:
         postgres-version: [16, 17, 18]
     steps:
       - name: Check out
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Test
         uses: ./.github/actions/test
@@ -195,7 +196,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check out
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Test
         uses: ./.github/actions/test
@@ -221,6 +222,8 @@ jobs:
       ]
     secrets: inherit
     uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: write
     with:
       framework: ${{ needs.prepare.outputs.framework }}
       branch: ${{ github.ref_name }}
@@ -246,7 +249,7 @@ jobs:
 
     steps:
       - name: Notify
-        uses: tsickert/discord-webhook@v6.0.0
+        uses: tsickert/discord-webhook@v7.0.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: "GitHub Actions"

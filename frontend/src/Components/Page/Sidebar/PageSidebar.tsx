@@ -62,6 +62,10 @@ const LINKS: SidebarItem[] = [
         title: () => translate('LibraryImport'),
         to: '/add/import',
       },
+      {
+        title: () => translate('Statistics'),
+        to: '/statistics',
+      },
     ],
   },
 
@@ -231,10 +235,7 @@ function PageSidebar() {
     transform: isSidebarVisible ? 0 : SIDEBAR_WIDTH * -1,
   });
 
-  const urlBase = window.Sonarr.urlBase;
-  const pathname = urlBase
-    ? location.pathname.substr(urlBase.length) || '/'
-    : location.pathname;
+  const { pathname } = location;
 
   const activeParent = useMemo(() => {
     return (
@@ -435,10 +436,11 @@ function PageSidebar() {
   const ScrollerComponent = isSmallScreen ? Scroller : OverlayScroller;
 
   return (
-    <div
+    <nav
       ref={sidebarRef}
       className={styles.sidebarContainer}
       style={containerStyle}
+      aria-label={translate('MainNavigation')}
     >
       {isSmallScreen ? (
         <div className={styles.sidebarHeader}>
@@ -521,7 +523,7 @@ function PageSidebar() {
 
         <Messages />
       </ScrollerComponent>
-    </div>
+    </nav>
   );
 }
 

@@ -1,6 +1,6 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { ValidationFailures } from 'Store/Selectors/selectSettings';
+import ModelBase from 'App/ModelBase';
 import {
   ValidationError,
   ValidationFailure,
@@ -12,6 +12,7 @@ import fetchJson, {
 } from 'Utilities/Fetch/fetchJson';
 import getQueryPath from 'Utilities/Fetch/getQueryPath';
 import getQueryString, { QueryParams } from 'Utilities/Fetch/getQueryString';
+import { ValidationFailures } from 'Utilities/selectSettings';
 
 interface MutationOptions<T, TData>
   extends Omit<FetchJsonOptions<TData>, 'method'> {
@@ -70,4 +71,17 @@ export function getValidationFailures(
       warnings: [],
     }
   );
+}
+
+export function addOrUpdateQueryClientItem<
+  T extends ModelBase,
+  K extends keyof T
+>(oldData: T[] = [], newItem: T, key: K) {
+  const existingIndex = oldData.findIndex((item) => item[key] === newItem[key]);
+
+  if (existingIndex === -1) {
+    return [...oldData, newItem];
+  }
+
+  return oldData.map((item) => (item[key] === newItem[key] ? newItem : item));
 }

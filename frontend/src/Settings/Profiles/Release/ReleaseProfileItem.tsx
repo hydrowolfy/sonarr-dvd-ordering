@@ -17,8 +17,8 @@ import {
 import styles from './ReleaseProfileItem.css';
 
 interface ReleaseProfileProps extends ReleaseProfileModel {
-  tagList: Tag[];
-  indexerList: IndexerModel[];
+  tagList: ReadonlyArray<Tag>;
+  indexerList: ReadonlyArray<IndexerModel>;
 }
 
 function ReleaseProfileItem(props: ReleaseProfileProps) {
@@ -59,6 +59,7 @@ function ReleaseProfileItem(props: ReleaseProfileProps) {
     <Card
       className={styles.releaseProfile}
       overlayContent={true}
+      aria-label={translate('EditReleaseProfileName', { name: name ?? id })}
       onPress={setEditReleaseProfileModalOpen}
     >
       {name ? <div className={styles.name}>{name}</div> : null}
