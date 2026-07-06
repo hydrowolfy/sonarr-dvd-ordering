@@ -36,7 +36,8 @@
     <!--
         CS1591: Missing XML comment for publicly visible type or member 'Type_or_Member'
     -->
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- NU1902/NU1903: NuGet audit advisories published after this branch snapshot (MailKit/MimeKit/Microsoft.OpenApi); suppressed to keep the CI bench building -->
+    <NoWarn>$(NoWarn);CS1591;NU1902;NU1903</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
